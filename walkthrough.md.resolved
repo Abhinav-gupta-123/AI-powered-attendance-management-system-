@@ -1,0 +1,118 @@
+# FastAPI Wrapper — Walkthrough
+
+## What Was Built
+
+A single file [scripts/api.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/api.py) (1,282 lines) that exposes all three attendance
+system features as a FastAPI application. **No logic in any existing script was
+changed** — all algorithms, thresholds, DB queries, and FAISS operations are
+imported verbatim from [live_attendance.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py), [inspect_index.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/inspect_index.py), and
+[Enroll_student.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/Enroll_student.py).
+
+---
+
+## Start the Server
+
+```powershell
+cd "c:\Users\abhin\Desktop\AI-powered-attendance-management-system-"
+.\.venv\Scripts\activate
+uvicorn scripts.api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Interactive API docs: **http://localhost:8000/docs**
+
+---
+
+## Endpoint Reference
+
+### Health
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness probe — shows model loaded status & active sessions |
+
+### Inspect ([inspect_index.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/inspect_index.py) wrapped)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/inspect/classes` | List all classes with FAISS index files |
+| GET | `/inspect/{class_name}` | Full class data as JSON |
+| GET | `/inspect/{class_name}/html` | HTML report (identical to opening in browser) |
+
+### Attendance ([live_attendance.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py) wrapped)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/attendance/session/start` | Start/resume session → `{session_id}` |
+| GET | `/attendance/session/{id}/stream` | **MJPEG live feed** (annotated HUD) |
+| GET | `/attendance/session/{id}/status` | JSON snapshot: present_log, fps, elapsed |
+| POST | `/attendance/session/{id}/stop` | Finalize — mark absents, close DB session |
+| DELETE | `/attendance/session/{id}` | Quit without saving (like pressing Q) |
+
+**Start body:**
+```json
+{"class_name": "CS-A", "teacher_name": "Mr. Smith", "resume": false}
+```
+
+### Enroll ([Enroll_student.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/Enroll_student.py) wrapped)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/enroll/start` | Start enrollment job → `{job_id}` |
+| GET | `/enroll/status/{job_id}` | **SSE stream** of quality + state events |
+| POST | `/enroll/{job_id}/trigger` | Trigger angle capture (replaces SPACE key) |
+| GET | `/enroll/{job_id}` | Non-streaming job state snapshot |
+| DELETE | `/enroll/{job_id}` | Cancel job |
+
+**Start body:**
+```json
+{"class_name": "CS-A", "roll_no": "ST099", "name": "Test Student"}
+```
+
+**SSE events emitted:** `quality_update`, `state_change`, `angle_captured`,
+`capture_failed`, `duplicate`, `enrolled`, `error`, `cancelled`, `stream_end`
+
+---
+
+## Safety & Optimization Applied
+
+| Concern | Mechanism |
+|---------|-----------|
+| **OOM — sessions** | `MAX_CONCURRENT_SESSIONS = 2` cap; 429 if exceeded |
+| **OOM — enrollments** | `MAX_CONCURRENT_ENROLLMENTS = 2` cap; 429 if exceeded |
+| **OOM — smooth_buf** | `SMOOTH_BUF_MAX` from [live_attendance.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py) unchanged |
+| **OOM — write queue** | `WRITE_QUEUE_MAX` from [live_attendance.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py) unchanged |
+| **OOM — MJPEG stream** | `asyncio.Queue(maxsize=2)` — oldest frame dropped, never stalls |
+| **OOM — SSE queue** | `asyncio.Queue(maxsize=50)` — oldest event evicted on overflow |
+| **Blocking I/O** | DB calls + model inference in `run_in_executor(None, ...)` |
+| **Model load timeout** | `asyncio.wait_for(..., timeout=60s)` on InsightFace load |
+| **DB query timeout** | `asyncio.wait_for(..., timeout=30s)` on all DB executor calls |
+| **SSE idle timeout** | Auto-disconnect after `SSE_IDLE_TIMEOUT_S = 120s` |
+| **Enroll trigger timeout** | 30s window per angle before auto-skip |
+| **Thread-safe frame push** | `run_coroutine_threadsafe` into captured `_main_loop` |
+| **Thread-safe SSE push** | Same pattern — `EnrollJob.push_event` via `_main_loop` |
+| **Graceful shutdown** | [lifespan](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/api.py#603-635) context: stops all sessions, drains write queues |
+| **Camera recovery** | [CameraThread](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py#328-366) (unchanged from [live_attendance.py](file:///c:/Users/abhin/Desktop/AI-powered-attendance-management-system-/scripts/live_attendance.py)) auto-reconnects |
+
+---
+
+## Flow Diagram
+
+```
+Client                FastAPI (api.py)              Background Thread
+──────                ───────────────              ─────────────────
+POST /attendance/session/start
+                 → load students (DB)
+                 → build FAISS index
+                 → create AttendanceSession
+                 → start CameraThread
+                 → start _process_loop thread ────→ frame grab loop
+                 ← {session_id}                        ↓
+GET  /..../stream                                  _process_frame()
+                 ← MJPEG multipart stream ←──────  _push_frame() via
+                                                   run_coroutine_threadsafe
+GET  /..../status                                  (same thread)
+                 ← JSON snapshot
+
+POST /..../stop
+                 → drain write_queue.join()
+                 → db_mark_absent_bulk()
+                 → db_close_session()
+                 → sess.stop()
+                 ← summary JSON
+```
