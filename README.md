@@ -1,18 +1,17 @@
 <div align="center">
 
-<!-- ANIMATED HEADER -->
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f0c29,50:302b63,100:24243e&height=200&section=header&text=FaceAttend%20AI&fontSize=60&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Next-Gen%20Attendance%20%7C%20Powered%20by%20Computer%20Vision&descAlignY=60&descSize=18" width="100%"/>
 
-<!-- BADGES -->
 <p align="center">
   <img src="https://img.shields.io/badge/Status-🔥%20Actively%20Developing-brightgreen?style=for-the-badge&logo=github"/>
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Flask-Backend-000000?style=for-the-badge&logo=flask&logoColor=white"/>
-  <img src="https://img.shields.io/badge/OpenCV-Face%20Detection-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"/>
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Uvicorn-ASGI%20Server-4B0082?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/InsightFace-Buffalo__SC%2FL-00FFFF?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/FAISS-Vector%20Search-FF6B6B?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/InsightFace-Buffalo__SC-00FFFF?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/DeepFace-Recognition-FF4500?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/MySQL-Connection%20Pool-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
+  <img src="https://img.shields.io/badge/JWT-Auth%20%2B%20Roles-orange?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/OpenCV-CV%20Processing-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"/>
 </p>
 
 <br/>
@@ -32,30 +31,32 @@
 
 ## ⚡ What Is This?
 
-**FaceAttend AI** is a cutting-edge, production-grade attendance management system that uses **computer vision + deep learning** to identify people from a live camera feed and automatically record their attendance — in real time, with high accuracy.
+**FaceAttend AI** is a production-grade, fully automated attendance management system that uses **computer vision + deep learning** to identify people from a live camera feed and record their attendance in real time — with high accuracy, role-based access control, and multi-school support.
 
-No more manual entries. No more buddy punching. No more spreadsheets.
+No manual entries. No buddy punching. No spreadsheets.
 
 Just walk in front of the camera → recognized → ✅ **Done.**
 
 ---
 
-## 🧠 The Tech Brain
+## 🧠 How It Works (Actual Pipeline)
 
 ```
 📸 Camera Feed
       ↓
-🎯 InsightFace Buffalo_SC (Face Detection + Alignment)
+🎯 InsightFace Buffalo_SC  ──  Face Detection + Alignment (640×640)
       ↓
-🧬 AdaFace / DeepFace / InsightFace Buffalo_L (Face Embedding)
+🧬 InsightFace Buffalo_L   ──  512-D Face Embedding (ONNX / CPU)
       ↓
-⚡ FAISS Vector Index (Lightning-fast Similarity Search)
+⚡ FAISS Index             ──  Per-school cosine similarity search
       ↓
-🆔 Identity Matched
+🆔 Identity Matched        ──  Confidence score logged
       ↓
-🗄️  MySQL Database (Attendance Logged)
+🗄️  MySQL (pooled)         ──  Attendance record written (1 per student/day)
       ↓
-🌐 Flask API → HTML Frontend Dashboard
+🌐 FastAPI + Uvicorn       ──  REST API + HTML Dashboard
+      ↓
+🔐 JWT Auth                ──  Admin / Teacher role-gated routes
 ```
 
 ---
@@ -65,61 +66,91 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 | Feature | Status |
 |---|---|
 | 🎯 Real-time face detection via InsightFace Buffalo_SC | ✅ Live |
-| 🧬 Deep face embedding (AdaFace/InsightFace/DeepFace) | ✅ Live |
-| ⚡ FAISS-powered sub-millisecond face search | ✅ Live |
-| 🏫 Multi-school / multi-organization support | ✅ Live |
-| 🗄️ MySQL attendance records & logs | ✅ Live |
-| 🌐 Web dashboard (Flask + HTML) | ✅ Live |
-| 📦 Register new students/employees via webcam | ✅ Live |
-| 🚫 Anti-spoofing / liveness detection | 🔄 In Progress |
+| 🧬 512-D face embedding via InsightFace Buffalo_L | ✅ Live |
+| ⚡ FAISS cosine similarity search (per-school index) | ✅ Live |
+| 🏫 Multi-school architecture with isolated FAISS indexes | ✅ Live |
+| 🗄️ MySQL with connection pooling (pool size 5) | ✅ Live |
+| 🔐 JWT authentication (bcrypt + jose) | ✅ Live |
+| 👤 Admin & Teacher roles with class-level access control | ✅ Live |
+| 📋 Session-based attendance (one session per class/date) | ✅ Live |
+| 📸 Student enrollment via webcam (3-angle embeddings) | ✅ Live |
+| 🔍 FAISS index inspector UI | ✅ Live |
+| 🌐 FastAPI REST API + HTML frontend dashboard | ✅ Live |
 | 📊 Analytics & attendance reports | 🔄 In Progress |
+| 🚫 Anti-spoofing / liveness detection | 🔄 In Progress |
 | 📱 Mobile-friendly UI | 🔄 In Progress |
-| 🔔 Email/SMS alert on absence | 🧪 Planned |
-| ☁️ Cloud deployment (Docker + CI/CD) | 🧪 Planned |
+| 🔔 Email/SMS alerts on absence | 🧪 Planned |
+| ☁️ Docker + cloud deployment | 🧪 Planned |
 
 ---
 
-## 🏗️ Project Architecture
+## 🏗️ Project Structure
 
 ```
 AI-powered-attendance-management-system/
 │
-├── 📁 frontend/              # HTML/CSS/JS Web Dashboard
-│   └── ...                  # Attendance UI, Registration forms
+├── 📁 frontend/                  # HTML/CSS/JS Web Dashboard
 │
-├── 📁 models/                # Pre-trained AI model weights
-│   └── ...                  # AdaFace, YOLO face models
+├── 📁 models/                    # InsightFace model weights (Buffalo_SC / Buffalo_L)
 │
-├── 📁 scripts/               # Core logic & utilities
-│   └── ...                  # Detection, embedding, registration
+├── 📁 scripts/
+│   ├── api.py                    # FastAPI entry point — mounts all routers
+│   ├── auth_deps.py              # JWT auth dependencies (get_current_user, require_admin)
+│   ├── config.py                 # DB credentials
+│   ├── db.py                     # MySQL connection pool + query helpers
+│   ├── DB_setup.py               # One-time DB + table creation
+│   ├── live_attendance.py        # Core live attendance session logic
+│   ├── Enroll_student.py         # Student enrollment + embedding generation
+│   ├── inspect_index.py          # FAISS index inspection utilities
+│   ├── migrate_csv.py            # CSV → MySQL data migration
+│   ├── migrate_auth.py           # Phase 2: users + teacher_classes tables
+│   ├── migrate_faiss.py          # Move flat indexes → per-school subdirectories
+│   └── routers/
+│       ├── attendance.py         # Live session routes + dashboard UI
+│       ├── enroll.py             # Enrollment routes + UI
+│       ├── inspect.py            # FAISS inspector routes + UI
+│       └── auth.py               # Login / logout / token routes
 │
-├── 📁 faiss_indexes/         # Per-school FAISS vector databases
-│   └── Default School/      # Stores face embeddings per org
+├── 📁 faiss_indexes/
+│   └── Default School/           # Per-school FAISS index files (.index per class)
 │
-├── 📄 requirements.txt       # All dependencies
+├── 📄 requirements.txt
 ├── 📄 .gitignore
-└── 📄 README.md              # You are here 😎
+└── 📄 README.md
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-<div align="center">
-
 | Layer | Technology |
 |---|---|
-| **Face Detection** | InsightFace Buffalo_SC / Buffalo_L, MTCNN, RetinaFace |
-| **Face Recognition** | DeepFace, AdaFace, InsightFace |
-| **Vector Search** | FAISS (Facebook AI Similarity Search) |
-| **Backend** | Python, Flask, Flask-CORS, Gunicorn |
-| **Database** | MySQL (mysql-connector-python) |
-| **CV Processing** | OpenCV, Pillow, scikit-image |
-| **ML Frameworks** | TensorFlow, PyTorch (CPU), Keras, ONNX Runtime |
-| **Utilities** | NumPy, Pandas, Polars, SciPy, scikit-learn |
+| **Face Detection + Alignment** | InsightFace Buffalo_SC (ONNX, CPUExecutionProvider) |
+| **Face Recognition / Embedding** | InsightFace Buffalo_L — 512-D float32 embeddings |
+| **Vector Search** | FAISS (per-school, per-class cosine similarity) |
+| **Backend Framework** | FastAPI + Uvicorn (async, ASGI) |
+| **Authentication** | JWT (python-jose) + bcrypt password hashing |
+| **Database** | MySQL via mysql-connector-python (connection pool, size=5) |
+| **CV Processing** | OpenCV, Pillow |
+| **ML Runtime** | ONNX Runtime (CPU), TensorFlow, PyTorch CPU |
 | **Frontend** | HTML5, CSS3, JavaScript |
 
-</div>
+---
+
+## 🗄️ Database Schema
+
+```
+schools
+  └── classes        (e.g. CS-A, MECH-B, per school)
+        └── students       (name, roll_no, 3× 512-D embedding BLOBs)
+        └── attendance     (one row per student per day + confidence_score)
+        └── sessions       (groups all marks from one live camera session)
+
+users                (admins + teachers, per school)
+teacher_classes      (maps teachers → their assigned classes)
+```
+
+> Embeddings are stored as `MEDIUMBLOB` (3 angles per student) in MySQL **and** live in FAISS — the index can be fully rebuilt from the DB at any time.
 
 ---
 
@@ -128,8 +159,8 @@ AI-powered-attendance-management-system/
 ### Prerequisites
 
 - Python 3.10+
-- MySQL installed and running
-- Webcam / IP Camera
+- MySQL running locally (port 3306)
+- Webcam or IP camera
 
 ### Installation
 
@@ -138,109 +169,97 @@ AI-powered-attendance-management-system/
 git clone https://github.com/Abhinav-gupta-123/AI-powered-attendance-management-system-.git
 cd AI-powered-attendance-management-system-
 
-# 2. Create a virtual environment (highly recommended!)
+# 2. Create and activate a virtual environment
 python -m venv venv
-source venv/bin/activate      # On Windows: venv\Scripts\activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-# 3. Install all dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
-
-# 4. Set up your MySQL database
-# Create a database and update the config in your script
-# (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
-
-# 5. Run the Flask server
-python scripts/app.py        # or whatever your entry point is
-
-# 6. Open the dashboard
-# Navigate to http://localhost:5000 in your browser
 ```
 
+### First-Time Database Setup (run in order)
+
+```bash
+# Step 1 — Create all tables (schools, classes, students, attendance, sessions)
+python scripts/DB_setup.py
+
+# Step 2 — Migrate existing CSV data into MySQL (if you have prior data)
+python scripts/migrate_csv.py
+
+# Step 3 — Add users + teacher_classes tables and seed default admin account
+python scripts/migrate_auth.py
+# Default login → username: admin  |  password: admin123
+# ⚠️  Change this immediately in production!
+
+# Step 4 — Restructure FAISS indexes into per-school subdirectories
+python scripts/migrate_faiss.py
+```
+
+### Run the Server
+
+```bash
+uvicorn scripts.api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Open **http://localhost:8000** in your browser.
+Interactive API docs at **http://localhost:8000/docs** (Swagger UI, auto-generated by FastAPI).
+
 ---
 
-## 🎬 How It Works
+## 🔐 Auth & Roles
 
-### 1️⃣ Register a Face
-> Open the dashboard → Add student/employee → Capture photos via webcam → System generates a **512-D face embedding** using AdaFace/InsightFace → Stored in the **FAISS vector index** for that school/org.
-
-### 2️⃣ Mark Attendance (Real-Time)
-> Camera feed starts → **YOLOv8** detects faces in each frame → Each detected face is embedded → **FAISS** performs nearest-neighbor search → If similarity > threshold → Person identified → **MySQL** logs attendance with timestamp.
-
-### 3️⃣ View Records
-> Web dashboard shows live attendance, history, and per-student records.
-
----
-
-## 📸 Architecture Diagrams
-
-> The repo includes detailed SVG architecture diagrams:
-> - `final_adaface_architecture_svg.svg` — AdaFace model pipeline
-> - `final_attendance_architecture.svg` — Full system flow
-
-*(Check them out in the repo root!)*
-
----
-
-## 🧪 Why These Models?
-
-| Model | Why It's Here |
+| Role | Access |
 |---|---|
-| **InsightFace Buffalo_SC/L** | All-in-one pack: detection, alignment & embedding — accurate and fast on CPU |
-| **AdaFace** | State-of-the-art face recognition, especially for low-quality/partial faces |
-| **InsightFace** | Production-proven face analysis & embedding |
-| **DeepFace** | Wrapper for multiple recognition models — flexible |
-| **FAISS** | Can search millions of face embeddings in milliseconds |
-| **MTCNN / RetinaFace** | Accurate face alignment for better embedding quality |
+| **Admin** | Full access — all classes, all students, manage users |
+| **Teacher** | Only their assigned classes (enforced at route level) |
+
+JWT tokens expire after **12 hours**. Revoked on logout via in-memory blocklist.
 
 ---
 
 ## 🗺️ Roadmap
 
 ```
-[✅] Core face detection + recognition pipeline
-[✅] FAISS-based fast identity lookup
-[✅] Flask REST API
-[✅] MySQL attendance logging
-[✅] Multi-school FAISS indexes
-[✅] Web dashboard
+[✅] InsightFace Buffalo_SC/L detection + embedding pipeline
+[✅] Per-school FAISS cosine similarity search
+[✅] FastAPI + Uvicorn async backend
+[✅] MySQL attendance logging with connection pooling
+[✅] JWT auth — admin + teacher roles with class-level guards
+[✅] Session-based attendance tracking with confidence scores
+[✅] Student enrollment (3-angle embeddings in DB + FAISS)
+[✅] Multi-school FAISS index structure
+[✅] FAISS index inspector
 [🔄] Anti-spoofing / liveness detection
 [🔄] Analytics dashboard with charts
 [🔄] Report export (CSV / PDF)
 [🧪] Docker containerization
 [🧪] Cloud deployment (AWS / GCP / Render)
 [🧪] Email/SMS alerts for absent students
-[🧪] Mobile app or PWA
 ```
 
 ---
 
 ## 🤝 Contributing
 
-This project is **actively under development** — improvements and new features are being added regularly!
-
-If you want to contribute:
+This project is **actively under development** — new features and improvements ship regularly.
 
 ```bash
-# Fork the repo, create a branch
 git checkout -b feature/your-feature-name
-
-# Make your changes, then
-git commit -m "✨ Add: your feature description"
+git commit -m "✨ Add: description"
 git push origin feature/your-feature-name
-
 # Open a Pull Request 🚀
 ```
 
 ---
 
-## ⚠️ Known Limitations / Work In Progress
+## ⚠️ Work In Progress
 
-- Anti-spoofing (photo/video attacks) is being actively worked on
-- GPU support is present in architecture but CPU-mode is the default
-- UI is functional but a redesign is planned
-- Cloud deployment is upcoming
+- Anti-spoofing is actively being developed
+- Currently CPU-only (GPU support is architecturally ready via ONNX providers)
+- UI redesign is planned
+- Cloud deployment coming soon
 
-> This project is a **living, breathing system** — things get better every week! 🔥
+> This is a **living system** — it gets better every week. 🔥
 
 ---
 
@@ -258,17 +277,11 @@ git push origin feature/your-feature-name
 
 ---
 
-## 📄 License
-
-This project is open-source. Feel free to fork, star ⭐, and build upon it!
-
----
-
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:24243e,50:302b63,100:0f0c29&height=120&section=footer&animation=fadeIn" width="100%"/>
 
-### ⭐ If this project helped you or impressed you, drop a star — it means the world!
+### ⭐ If this project impressed you, drop a star — it means the world!
 
 *Built with 💜 by Abhinav Gupta | Always improving, never stopping.*
 
