@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/OpenCV-Face%20Detection-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"/>
   <img src="https://img.shields.io/badge/FAISS-Vector%20Search-FF6B6B?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/YOLO-Detection-00FFFF?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/InsightFace-Buffalo__SC-00FFFF?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/DeepFace-Recognition-FF4500?style=for-the-badge"/>
 </p>
 
@@ -45,9 +45,9 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 ```
 📸 Camera Feed
       ↓
-🎯 YOLOv8 (Face Detection)  ←── Ultralytics
+🎯 InsightFace Buffalo_SC (Face Detection + Alignment)
       ↓
-🧬 AdaFace / DeepFace / InsightFace (Face Embedding)
+🧬 AdaFace / DeepFace / InsightFace Buffalo_L (Face Embedding)
       ↓
 ⚡ FAISS Vector Index (Lightning-fast Similarity Search)
       ↓
@@ -64,7 +64,7 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 
 | Feature | Status |
 |---|---|
-| 🎯 Real-time face detection via YOLOv8 | ✅ Live |
+| 🎯 Real-time face detection via InsightFace Buffalo_SC | ✅ Live |
 | 🧬 Deep face embedding (AdaFace/InsightFace/DeepFace) | ✅ Live |
 | ⚡ FAISS-powered sub-millisecond face search | ✅ Live |
 | 🏫 Multi-school / multi-organization support | ✅ Live |
@@ -109,7 +109,7 @@ AI-powered-attendance-management-system/
 
 | Layer | Technology |
 |---|---|
-| **Face Detection** | YOLOv8 (Ultralytics), MTCNN, RetinaFace |
+| **Face Detection** | InsightFace Buffalo_SC / Buffalo_L, MTCNN, RetinaFace |
 | **Face Recognition** | DeepFace, AdaFace, InsightFace |
 | **Vector Search** | FAISS (Facebook AI Similarity Search) |
 | **Backend** | Python, Flask, Flask-CORS, Gunicorn |
@@ -185,7 +185,7 @@ python scripts/app.py        # or whatever your entry point is
 
 | Model | Why It's Here |
 |---|---|
-| **YOLOv8** | Real-time, blazing-fast face detection even on CPU |
+| **InsightFace Buffalo_SC/L** | All-in-one pack: detection, alignment & embedding — accurate and fast on CPU |
 | **AdaFace** | State-of-the-art face recognition, especially for low-quality/partial faces |
 | **InsightFace** | Production-proven face analysis & embedding |
 | **DeepFace** | Wrapper for multiple recognition models — flexible |
