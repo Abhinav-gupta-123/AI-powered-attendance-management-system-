@@ -76,9 +76,9 @@ def get_enroll_jobs_lock(): return _get_lock()
 class EnrollJob:
     STATES = ("waiting","capturing","checking","enrolling","done","duplicate","error","cancelled")
 
-    def __init__(self, job_id, class_name, roll_no, name):
+    def __init__(self, job_id: str, class_name: str, roll_no: str, name: str, school_name: str = "Default School"):
         self.job_id = job_id; self.class_name = class_name
-        self.roll_no = roll_no; self.name = name
+        self.roll_no = roll_no; self.name = name; self.school_name = school_name
         self.state = "waiting"; self.angle_done = 0
         self.embs: List[np.ndarray] = []; self.crops: List[np.ndarray] = []
         self.message = "Ready — waiting for face..."; self.quality = 0.0; self.reason = ""
@@ -265,7 +265,7 @@ async def enroll_start(req: StartEnrollRequest, user: Dict = Depends(get_current
         active = sum(1 for j in _enroll_jobs.values() if not j.is_terminal())
         if active >= MAX_CONCURRENT_ENROLLMENTS:
             raise HTTPException(status_code=429, detail=f"Max concurrent enrollment jobs ({MAX_CONCURRENT_ENROLLMENTS}) reached.")
-    job_id = str(uuid.uuid4()); job = EnrollJob(job_id, req.class_name, req.roll_no, req.name)
+    job_id = str(uuid.uuid4()); job = EnrollJob(job_id, req.class_name, req.roll_no, req.name, req.school_name)
     async with lock: _enroll_jobs[job_id] = job
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, _run_enroll_job_sync, job_id, loop)

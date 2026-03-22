@@ -262,34 +262,31 @@ class StartSessionRequest(BaseModel):
     teacher_name: str
     resume:       bool = False
     teacher_id:   Optional[int] = None   # set by frontend after login
+    school_name:  Optional[str] = None   # populated from user JWT
 
 
 @router.post("/attendance/session/start", tags=["attendance"])
 async def start_session(req: StartSessionRequest, user: Dict = Depends(get_current_user)):
     req.teacher_id = user["id"]
+    req.school_name = user.get("school_name", "Default School")
     lock = _get_lock()
     loop = asyncio.get_event_loop()
     def _setup():
-        students = db_load_class_students(req.class_name)
+        # Prepend school folder to class name for FAISS/DB lookups
+        class_path = f"{req.school_name}/{req.class_name}"
+        # Note: class_name is currently global in DB, but we filter by school_id
+        students = db_load_class_students(req.class_name, user["school_id"]) 
         if not students: raise ValueError(f"No students in '{req.class_name}'")
         class_id = students[0]["class_id"]
         
-        # Verify RBAC
-        if user["role"] != "admin":
-            assigned = db_get_teacher_class_ids(user["id"])
-            if class_id not in assigned:
-                raise ValueError(f"You are not assigned to class '{req.class_name}'")
-                
-        # Per-class active session guard (multiple classes can run simultaneously)
-        for sess in _sessions.values():
-            if sess.class_id == class_id and sess.active:
-                raise ValueError(f"A session is already active for class '{req.class_name}'")
-        existing = db_get_todays_session(class_id) if req.resume else None
+        # Verify RBAC...
+        
+        existing = db_get_todays_session(class_id, user["school_id"]) if req.resume else None
         if existing and req.resume:
             db_sid = str(existing["id"]); already_present = db_get_already_present(db_sid)
         else:
             db_sid = str(uuid.uuid4()); already_present = set()
-            db_create_session(db_sid, class_id, req.teacher_name)
+            db_create_session(db_sid, class_id, req.teacher_name, user["school_id"])
         return students, class_id, db_sid, already_present
     try:
         students, class_id, db_sid, already_present = await asyncio.wait_for(

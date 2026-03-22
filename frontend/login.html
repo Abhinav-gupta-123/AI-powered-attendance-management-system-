@@ -92,8 +92,8 @@ async function doLogin(){
     if(!r.ok){ showAlert(d.detail||'Invalid credentials'); return; }
     
     // Store token and user info
-    localStorage.setItem('att_token', d.access_token);
-    localStorage.setItem('att_user', JSON.stringify(d.user));
+    localStorage.setItem('access_token', d.access_token);
+    localStorage.setItem('user', JSON.stringify(d.user));
     showAlert('Login successful! Redirecting…', true);
     setTimeout(()=>{ window.location.href='/'; }, 800);
   }catch(e){
@@ -109,7 +109,7 @@ document.addEventListener('keydown', e=>{
 });
 
 // Auto-redirect if already logged in
-const tok = localStorage.getItem('att_token');
+const tok = localStorage.getItem('access_token');
 if(tok){ window.location.href='/'; }
 </script>
 </body>

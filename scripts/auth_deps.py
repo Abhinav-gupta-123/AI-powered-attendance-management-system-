@@ -11,9 +11,9 @@ Usage in a route:
 
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 import bcrypt
@@ -116,21 +116,29 @@ def db_get_teacher_class_ids(teacher_id: int):
 
 
 # ── FastAPI Dependencies ────────────────────────────────────────────────────────
-async def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)) -> Dict:
-    """Validates JWT and returns the user dict. Raises 401 if invalid."""
-    if creds is None:
+async def get_current_user(
+    token: Optional[str] = Query(None),
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)
+) -> Dict:
+    """Dependency to get the current authenticated user from JWT (header or query param)."""
+    jwt_token = None
+    if creds:
+        jwt_token = creds.credentials
+    elif token:
+        jwt_token = token
+        
+    if not jwt_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    token = creds.credentials
-    if token in _revoked_tokens:
+    if jwt_token in _revoked_tokens:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
-    payload = decode_token(token)
+    payload = decode_token(jwt_token)
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
     user = db_get_user_by_id(int(user_id))
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    user["_token"] = token  # carry token for logout
+    user["_token"] = jwt_token  # carry token for logout
     return user
 
 

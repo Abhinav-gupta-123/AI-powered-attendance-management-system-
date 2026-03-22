@@ -154,7 +154,7 @@ def compute_adaptive_thresholds(students: List[Dict]) -> Dict[int, float]:
 #  MYSQL LAYER
 # ─────────────────────────────────────────────────────────────────────────────
 
-def db_load_class_students(class_name: str) -> List[Dict]:
+def db_load_class_students(class_name: str, school_id: int = 1) -> List[Dict]:
     conn = DB.get_conn()
     try:
         rows = DB.execute(conn,
@@ -165,7 +165,7 @@ def db_load_class_students(class_name: str) -> List[Dict]:
                JOIN   classes  c ON c.id = s.class_id
                WHERE  s.school_id = %s AND c.name = %s
                ORDER  BY s.id""",
-            (DB.SCHOOL_ID, class_name), fetch=True)
+            (school_id, class_name), fetch=True)
     finally:
         conn.close()
     students = []
@@ -226,14 +226,14 @@ def db_get_already_present(session_id: str) -> Set[int]:
 
 
 def db_create_session(session_id: str, class_id: int,
-                      teacher_name: str) -> None:
+                      teacher_name: str, school_id: int = 1) -> None:
     conn = DB.get_conn()
     try:
         DB.execute(conn,
             """INSERT INTO sessions
                (id, school_id, class_id, teacher_name, status)
                VALUES (%s, %s, %s, %s, 'active')""",
-            (session_id, DB.SCHOOL_ID, class_id, teacher_name))
+            (session_id, school_id, class_id, teacher_name))
     finally:
         conn.close()
 

@@ -504,9 +504,8 @@ def list_available(school_name: str = None):
                 indexes.append(rel_path.replace("\\", "/").replace(".index", ""))
                 
     if not indexes:
-        print(f"[ERROR] No .index files found anywhere in {FAISS_DIR}/")
-        sys.exit(1)
-    return indexes
+        print(f"[DEBUG] No .index files found in {search_root}")
+    return sorted(indexes)
 
 
 def main():

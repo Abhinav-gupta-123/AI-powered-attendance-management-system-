@@ -117,6 +117,7 @@ header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(to right,#
     <a href="/">&#127919; Attendance</a>
     <a href="/ui/enroll">&#128100; Enroll</a>
     <a href="/docs">API Docs</a>
+    <a href="#" onclick="logout()" style="color:var(--red)">&#128682; Logout</a>
   </div>
 </header>
 <div class="layout">
@@ -166,12 +167,33 @@ header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(to right,#
   </div>
 </div>
 <script>
+// --- Auth Guard ---
+const token = localStorage.getItem('access_token');
+if (!token) {
+  window.location.href = '/auth/ui/login';
+}
+
+function getAuthHeaders() {
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+}
+
+function logout() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('user');
+  window.location.href = '/auth/ui/login';
+}
+
 let allStudents = [], simMatrix = [], showHeatmap = false;
 async function loadClasses() {
   const el = document.getElementById('class-list');
   el.innerHTML = '<div style="padding:18px;color:#4b5563;font-size:.8rem;text-align:center">Loading…</div>';
   try {
-    const r = await fetch('/inspect/classes');
+    const r = await fetch('/inspect/classes', {
+      headers: getAuthHeaders()
+    });
     const d = await r.json();
     const classes = d.classes || [];
     if (!classes.length) {
@@ -180,7 +202,9 @@ async function loadClasses() {
     }
     el.innerHTML = '';
     const metas = await Promise.allSettled(
-      classes.map(c => fetch('/inspect/'+c).then(r => r.ok ? r.json() : null).catch(() => null))
+      classes.map(c => fetch('/inspect/'+c, {
+        headers: getAuthHeaders()
+      }).then(r => r.ok ? r.json() : null).catch(() => null))
     );
     classes.forEach((cls, i) => {
       const meta = metas[i].value;
@@ -190,7 +214,11 @@ async function loadClasses() {
       const nStu = meta ? (meta.students?.length ?? '?') : '?';
       const nVec = meta ? (meta.n_vectors ?? '?') : '?';
       const sz   = meta ? (meta.file_size_kb + ' KB') : '';
-      btn.innerHTML = `<div><div class="cls-name">${cls.replace(/_/g,' ')}</div>
+      
+      // Strip school prefix for display
+      const displayName = cls.includes('/') ? cls.split('/').pop() : cls;
+      
+      btn.innerHTML = `<div><div class="cls-name">${displayName.replace(/_/g,' ')}</div>
         <div class="cls-meta">${nStu} students · ${nVec} vec</div></div>
         <span class="cls-badge">${sz}</span>`;
       el.appendChild(btn);
@@ -208,7 +236,9 @@ async function loadClass(cls, btn, meta) {
   document.getElementById('stats-bar').classList.remove('visible');
   document.getElementById('filter-bar').classList.remove('visible');
   try {
-    const data = meta || await fetch('/inspect/'+cls).then(r => r.json());
+    const data = meta || await fetch('/inspect/'+cls, {
+      headers: getAuthHeaders()
+    }).then(r => r.json());
     allStudents = data.students || [];
     simMatrix   = data.sim_matrix || [];
     showHeatmap = false;
