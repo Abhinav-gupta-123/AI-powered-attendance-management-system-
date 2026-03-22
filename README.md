@@ -46,7 +46,7 @@ Just walk in front of the camera → recognized → ✅ **Done.**
       ↓
 🎯 InsightFace Buffalo_SC  ──  Face Detection + Alignment (640×640)
       ↓
-🧬 InsightFace Buffalo_L   ──  512-D Face Embedding (ONNX / CPU)
+🧬 InsightFace Buffalo_sc   ──  512-D Face Embedding (ONNX / CPU)
       ↓
 ⚡ FAISS Index             ──  Per-school cosine similarity search
       ↓
