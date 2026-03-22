@@ -66,7 +66,7 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 | Feature | Status |
 |---|---|
 | 🎯 Real-time face detection via InsightFace Buffalo_SC | ✅ Live |
-| 🧬 512-D face embedding via InsightFace Buffalo_L | ✅ Live |
+| 🧬 512-D face embedding via InsightFace Buffalo_sc | ✅ Live |
 | ⚡ FAISS cosine similarity search (per-school index) | ✅ Live |
 | 🏫 Multi-school architecture with isolated FAISS indexes | ✅ Live |
 | 🗄️ MySQL with connection pooling (pool size 5) | ✅ Live |
