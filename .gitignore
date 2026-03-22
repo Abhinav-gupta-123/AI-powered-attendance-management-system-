@@ -2,3 +2,4 @@ __pycache__
 .venv
 enrolled_images
 scripts\__pycache__
+tmp

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Enroll Student — Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020617;--surface:rgba(15,23,42,0.6);--border:rgba(51,65,85,0.4);
+  --text:#f8fafc;--muted:#94a3b8;--accent:#8b5cf6;--accent-glow:rgba(139,92,246,0.25);
+  --green:#34d399;--red:#fb7185;--yellow:#fbbf24;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;
+     background-image:radial-gradient(circle at top right, rgba(139,92,246,0.15) 0%, transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(56,189,248,0.1) 0%, transparent 40%)}
+header{background:rgba(2,6,23,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       border-bottom:1px solid var(--border);padding:16px 28px;z-index:10}
+header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(to right,#a78bfa,#e879f9);-webkit-background-clip:text;color:transparent;letter-spacing:-0.02em}
+.wrap{max-width:580px;margin:32px auto;padding:0 24px;display:flex;flex-direction:column;gap:20px;width:100%}
+.card{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border:1px solid var(--border);border-radius:16px;padding:28px;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+.card h2{font-size:.9rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px}
+label{font-size:.8rem;font-weight:500;color:var(--muted);display:block;margin-bottom:8px;margin-top:16px}
+input{width:100%;background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:10px;
+      color:var(--text);padding:12px 14px;font-size:.9rem;outline:none;transition:all .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2)}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow), inset 0 2px 4px rgba(0,0,0,0.2)}
+.btn{border:none;border-radius:10px;padding:12px;font-size:.95rem;font-weight:600;cursor:pointer;width:100%;margin-top:24px;
+     color:#fff;transition:all .2s;position:relative;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important;box-shadow:none}
+.btn-enroll{background:linear-gradient(135deg,#7c3aed,#4f46e5);border:1px solid rgba(255,255,255,0.1)}
+.btn-enroll:hover:not(:disabled){box-shadow:0 0 20px rgba(124,58,237,0.4)}
+.btn-trigger{background:linear-gradient(135deg,#059669,#047857);border:1px solid rgba(255,255,255,0.1)}
+.btn-trigger:hover:not(:disabled){box-shadow:0 0 20px rgba(5,150,105,0.4)}
+.btn-cancel{background:transparent;border:1px solid rgba(251,113,133,0.3);color:var(--red);margin-top:12px;box-shadow:none}
+.btn-cancel:hover{background:rgba(225,29,72,0.1);color:#fff}
+#events{max-height:240px;overflow-y:auto;font-size:.8rem;background:rgba(2,6,23,0.6);
+        border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:16px;display:none;
+        box-shadow:inset 0 2px 8px rgba(0,0,0,0.4)}
+.ev{padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:12px;animation:fade-in .3s}.ev:last-child{border:none}
+@keyframes fade-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.ev-time{color:var(--muted);min-width:52px;font-family:monospace;font-size:.75rem}
+.type-quality_update{color:#38bdf8}.type-angle_captured,.type-enrolled{color:var(--green)}
+.type-duplicate,.type-error{color:var(--red)}.type-state_change{color:var(--yellow)}
+.qbar-wrap{height:8px;background:rgba(15,23,42,0.8);border-radius:4px;margin-top:12px;overflow:hidden;border:1px solid var(--border)}
+.qbar{height:100%;background:linear-gradient(90deg,var(--red),var(--yellow),var(--green));border-radius:4px;transition:width .3s ease-out}
+#qbar-label{font-size:.75rem;font-weight:500;color:var(--muted);margin-top:6px;text-align:right}
+.alert{border-radius:10px;padding:12px 16px;font-size:.85rem;font-weight:500;display:none;margin-top:16px;animation:fade-in .2s}
+.a-err{background:rgba(225,29,72,0.1);border:1px solid rgba(225,29,72,0.3);color:var(--red);display:block}
+.a-ok{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);display:block}
+.back{color:var(--muted);font-size:.85rem;font-weight:500;text-decoration:none;transition:color .2s;display:inline-block;margin-bottom:4px}
+.back:hover{color:var(--text)}
+.dots{display:flex;gap:12px;margin-top:16px;justify-content:center}
+.dot{width:36px;height:36px;border-radius:50%;background:rgba(2,6,23,0.6);border:2px solid var(--border);
+     display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600;color:var(--muted);transition:all .3s}
+.dot.done{background:var(--green);border-color:var(--green);color:#022c22;box-shadow:0 0 16px rgba(52,211,153,0.4);transform:scale(1.1)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<header><h1>&#128100; Enroll New Student</h1></header>
+<div class="wrap">
+  <a class="back" href="/">&#8592; Back to Attendance</a>
+  <div class="card">
+    <h2>Student Info</h2>
+    <label>Class</label><input id="cls" placeholder="e.g. btech_cs_1"/>
+    <label>Roll No</label><input id="roll" placeholder="e.g. BT2401"/>
+    <label>Full Name</label><input id="name" placeholder="e.g. Priya Sharma"/>
+    <button class="btn btn-enroll" id="btn-start" onclick="startEnroll()">Start Enrollment</button>
+    <div id="alert" class="alert"></div>
+  </div>
+  <div class="card" id="ctrl-card" style="display:none">
+    <h2>Capture</h2>
+    <div style="width:100%;height:340px;background:#050505;border-radius:8px;overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center">
+      <img id="video-feed" style="max-width:100%;max-height:100%;object-fit:contain" src="" />
+    </div>
+    <p id="prompt-txt" style="font-size:.9rem">Waiting for face...</p>
+    <div class="qbar-wrap"><div class="qbar" id="qbar" style="width:0%"></div></div>
+    <div id="qbar-label">Quality: --</div>
+    <div class="dots" id="dots"></div>
+    <button class="btn btn-trigger" id="btn-trigger" onclick="trigger()" disabled>&#128247; Capture This Angle</button>
+    <button class="btn btn-cancel" id="btn-cancel" onclick="cancelJob()">Cancel</button>
+    <div id="events"></div>
+  </div>
+</div>
+<script>
+let jobId=null,es=null;
+function showAlert(msg,ok=false){const el=document.getElementById('alert');el.textContent=msg;el.className='alert '+(ok?'a-ok':'a-err');}
+async function startEnroll(){
+  const cls=document.getElementById('cls').value.trim(),roll=document.getElementById('roll').value.trim(),name=document.getElementById('name').value.trim();
+  if(!cls||!roll||!name){showAlert('Fill all fields.');return;}
+  document.getElementById('btn-start').disabled=true;
+  try{
+    const r=await fetch('/enroll/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({class_name:cls,roll_no:roll,name:name})});
+    const d=await r.json();
+    if(!r.ok){showAlert(d.detail||'Error');document.getElementById('btn-start').disabled=false;return;}
+    jobId=d.job_id;document.getElementById('ctrl-card').style.display='';
+    document.getElementById('video-feed').src = '/enroll/' + jobId + '/stream';
+    const dots=document.getElementById('dots');dots.innerHTML='';
+    for(let i=0;i<3;i++){const dot=document.createElement('div');dot.className='dot';dot.id='dot-'+i;dot.textContent=i+1;dots.appendChild(dot);}
+    subscribeSSE();
+  }catch(e){showAlert('Network: '+e.message);document.getElementById('btn-start').disabled=false;}
+}
+function subscribeSSE(){
+  es=new EventSource('/enroll/status/'+jobId);const evBox=document.getElementById('events');evBox.style.display='block';
+  es.onmessage=function(e){
+    const p=JSON.parse(e.data);
+    if(p.event==='stream_end'){es.close();return;}
+    const row=document.createElement('div');row.className='ev';
+    row.innerHTML='<span class="ev-time">'+p.ts+'</span><span class="type-'+p.event+'">'+p.event+'</span><span>'+(p.data.message||p.data.reason||'').slice(0,60)+'</span>';
+    evBox.prepend(row);
+    if(p.event==='quality_update'){
+      const q=p.data.quality||0;document.getElementById('qbar').style.width=Math.min(q,100)+'%';
+      document.getElementById('qbar-label').textContent='Quality: '+q.toFixed(0)+'% | Angle '+(p.data.angle_done+1)+'/'+p.data.angles_needed;
+      document.getElementById('prompt-txt').textContent=p.data.prompt||'Position face...';
+      document.getElementById('btn-trigger').disabled=(q<75);
+    }
+    if(p.event==='angle_captured'){const dot=document.getElementById('dot-'+(p.data.angle-1));if(dot){dot.className='dot done';}}
+    if(p.event==='enrolled'){showAlert('Enrolled! ID='+p.data.student_id,true);es.close();}
+    if(p.event==='duplicate'){showAlert('Duplicate: '+p.data.name+' (sim='+p.data.sim+')');es.close();}
+    if(p.event==='error'){showAlert(p.data.message||'Error');es.close();}
+  };
+}
+async function trigger(){if(!jobId)return;document.getElementById('btn-trigger').disabled=true;await fetch('/enroll/'+jobId+'/trigger',{method:'POST'});}
+async function cancelJob(){
+  if(jobId)await fetch('/enroll/'+jobId,{method:'DELETE'});if(es)es.close();
+  document.getElementById('video-feed').src='';
+  document.getElementById('ctrl-card').style.display='none';document.getElementById('btn-start').disabled=false;jobId=null;
+}
+</script>
+</body>
+</html>

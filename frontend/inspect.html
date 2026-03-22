@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FAISS Index Inspector — Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020617;--surface:rgba(15,23,42,0.6);--border:rgba(51,65,85,0.4);
+  --text:#f8fafc;--muted:#94a3b8;--accent:#38bdf8;--accent2:#818cf8;--accent-glow:rgba(56,189,248,0.25);
+  --green:#34d399;--yellow:#fbbf24;--red:#fb7185;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;
+     background-image:radial-gradient(circle at top right, rgba(129,140,248,0.1) 0%, transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(56,189,248,0.15) 0%, transparent 40%)}
+header{background:rgba(2,6,23,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:16px;flex-shrink:0;z-index:10}
+header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(to right,#38bdf8,#818cf8);-webkit-background-clip:text;color:transparent;letter-spacing:-0.02em}
+.nav-links{margin-left:auto;display:flex;gap:24px;font-size:.88rem;font-weight:500}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s;position:relative}
+.nav-links a:hover{color:var(--text)}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width .2s}
+.nav-links a:hover::after{width:100%}
+.layout{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden;position:relative}
+.sidebar{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+         border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:5}
+.sidebar-head{padding:16px 20px;border-bottom:1px solid var(--border);font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.class-list{flex:1;overflow-y:auto;padding:12px}
+.class-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(15,23,42,0.4);
+           border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;
+           margin-bottom:6px;color:var(--text);text-align:left;transition:all .2s}
+.class-btn:hover{background:rgba(30,41,59,0.5);border-color:var(--border)}
+.class-btn.active{background:rgba(14,165,233,0.1);border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 12px var(--accent-glow)}
+.cls-name{font-size:.9rem;font-weight:600;margin-bottom:4px}
+.cls-meta{font-size:.75rem;color:var(--muted)}
+.cls-badge{background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:.68rem;color:var(--accent);flex-shrink:0}
+.class-btn.active .cls-badge{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.refresh-btn{margin:12px;background:transparent;border:1px dashed var(--border);color:var(--muted);font-weight:500;
+             border-radius:10px;padding:10px;font-size:.85rem;cursor:pointer;width:calc(100% - 24px);transition:all .2s;box-shadow:none}
+.refresh-btn:hover{color:var(--text);border-color:var(--muted);background:rgba(255,255,255,0.05)}
+.main{display:flex;flex-direction:column;overflow:hidden;background:transparent}
+.stats-bar{background:rgba(15,23,42,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+           border-bottom:1px solid var(--border);padding:14px 28px;
+           display:none;gap:32px;flex-shrink:0;align-items:center;flex-wrap:wrap;z-index:4}
+.stats-bar.visible{display:flex;animation:fade-in .3s ease-out}
+.stat-chip{display:flex;flex-direction:column;gap:4px}
+.stat-num{font-size:1.3rem;font-weight:700;color:var(--accent);letter-spacing:-0.03em}
+.stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;font-weight:600;letter-spacing:.05em}
+.stats-sep{width:1px;height:32px;background:var(--border)}
+.filter-bar{background:var(--bg);border-bottom:1px solid var(--border);padding:12px 28px;
+            display:none;gap:12px;flex-shrink:0;align-items:center;flex-wrap:wrap;z-index:3}
+.filter-bar.visible{display:flex}
+.filter-bar input, .filter-bar select{
+  background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:8px 14px;font-size:.88rem;outline:none;transition:all .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,0.1)
+}
+.filter-bar input{min-width:240px}
+.filter-bar input:focus, .filter-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.filter-count{margin-left:auto;font-size:.8rem;font-weight:500;color:var(--muted)}
+.heatmap-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-weight:500;
+             border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;margin-left:8px;transition:all .2s}
+.heatmap-btn.on{border-color:var(--accent2);color:var(--accent2);background:rgba(129,140,248,0.1);box-shadow:inset 0 0 8px rgba(129,140,248,0.2)}
+.heatmap-btn:hover:not(.on){color:var(--text);border-color:var(--muted)}
+.scroll-area{flex:1;overflow-y:auto;padding:24px 28px}
+.placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--muted)}
+.placeholder svg{width:56px;height:56px;opacity:.4;color:var(--accent)}
+#loading{display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--accent);font-size:.95rem;font-weight:500}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;box-shadow:0 0 16px var(--accent-glow)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fade-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+.s-card{background:var(--surface);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+        border:1px solid var(--border);border-radius:16px;overflow:hidden;
+        transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+.s-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-glow)}
+.s-photo{width:100%;height:160px;background:#020617;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.s-photo img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.s-card:hover .s-photo img{transform:scale(1.05)}
+.s-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.s-body{padding:16px}
+.s-name{font-size:.95rem;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-roll{font-size:.75rem;color:var(--muted);margin-bottom:12px;font-family:monospace}
+.s-quality{margin-bottom:10px}
+.q-bar-wrap{height:6px;background:rgba(2,6,23,0.8);border-radius:3px;overflow:hidden;margin-top:6px;border:1px solid rgba(255,255,255,0.05)}
+.q-bar{height:100%;border-radius:3px;transition:width .5s ease-out}
+.q-label{font-size:.7rem;color:var(--muted);font-weight:500;display:flex;justify-content:space-between}
+.emb-dots{display:flex;gap:6px;margin-top:12px}
+.emb-dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,0.1)}
+.emb-filled{background:var(--accent);box-shadow:0 0 8px var(--accent-glow);border-color:var(--accent)}
+.emb-empty{background:var(--border)}
+.s-footer{padding:10px 16px 14px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.03);background:rgba(2,6,23,0.3)}
+.enrolled-date{font-size:.7rem;color:var(--muted);font-weight:500}
+.quality-badge{font-size:.7rem;font-weight:600;border-radius:999px;padding:3px 10px;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+.qb-high{background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.3)}
+.qb-mid{background:rgba(245,158,11,0.1);color:var(--yellow);border:1px solid rgba(245,158,11,0.3)}
+.qb-low{background:rgba(225,29,72,0.1);color:var(--red);border:1px solid rgba(225,29,72,0.3)}
+.heatmap-wrap{margin-top:32px;background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.heatmap-title{font-size:.9rem;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px}
+.heatmap-scroll{overflow-x:auto;padding-bottom:12px}
+.heatmap-table{border-collapse:collapse;font-size:.75rem}
+.heatmap-table th{color:var(--muted);font-weight:500;padding:6px 10px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.heatmap-table td{width:42px;height:42px;text-align:center;border:1px solid var(--bg);border-radius:6px;font-size:.7rem;font-weight:600;cursor:default;transition:transform .2s}
+.heatmap-table td:hover{transform:scale(1.1);z-index:2;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+.no-data{color:var(--muted);font-size:.9rem;padding:32px 0;text-align:center;width:100%}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#128202; FAISS Index Inspector</h1>
+  <div class="nav-links">
+    <a href="/">&#127919; Attendance</a>
+    <a href="/ui/enroll">&#128100; Enroll</a>
+    <a href="/docs">API Docs</a>
+  </div>
+</header>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-head">Classes</div>
+    <div class="class-list" id="class-list">
+      <div style="padding:18px;color:#4b5563;font-size:.8rem;text-align:center">Loading…</div>
+    </div>
+    <button class="refresh-btn" onclick="loadClasses()">&#8635; Refresh</button>
+  </div>
+  <div class="main" id="main-panel">
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="filter-bar" id="filter-bar">
+      <input id="f-search" placeholder="&#128269; Search by name or roll…" oninput="applyFilters()"/>
+      <select id="f-quality" onchange="applyFilters()">
+        <option value="all">All Quality</option>
+        <option value="complete">Complete (3 emb)</option>
+        <option value="partial">Partial (1–2 emb)</option>
+        <option value="missing">Missing embeddings</option>
+      </select>
+      <select id="f-sort" onchange="applyFilters()">
+        <option value="name">Sort: Name A→Z</option>
+        <option value="roll">Sort: Roll No</option>
+        <option value="quality_desc">Sort: Quality ↓</option>
+        <option value="quality_asc">Sort: Quality ↑</option>
+        <option value="emb_desc">Sort: Embeddings ↓</option>
+      </select>
+      <button class="heatmap-btn" id="hmap-btn" onclick="toggleHeatmap()">&#127918; Similarity Heatmap</button>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+    <div class="scroll-area" id="scroll-area" style="display:none">
+      <div class="card-grid" id="card-grid"></div>
+      <div class="heatmap-wrap" id="heatmap-wrap" style="display:none">
+        <div class="heatmap-title">Cosine Similarity Heatmap</div>
+        <div class="heatmap-scroll" id="heatmap-inner"></div>
+      </div>
+    </div>
+    <div id="loading">
+      <div class="spinner"></div><span>Loading class data…</span>
+    </div>
+    <div class="placeholder" id="placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <path d="M9 17v-2m3 2v-4m3 4v-6M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+      </svg>
+      <p>Select a class from the sidebar</p>
+    </div>
+  </div>
+</div>
+<script>
+let allStudents = [], simMatrix = [], showHeatmap = false;
+async function loadClasses() {
+  const el = document.getElementById('class-list');
+  el.innerHTML = '<div style="padding:18px;color:#4b5563;font-size:.8rem;text-align:center">Loading…</div>';
+  try {
+    const r = await fetch('/inspect/classes');
+    const d = await r.json();
+    const classes = d.classes || [];
+    if (!classes.length) {
+      el.innerHTML = '<div style="padding:14px;color:#4b5563;font-size:.78rem;text-align:center">No indexes found.<br>Enroll students first.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    const metas = await Promise.allSettled(
+      classes.map(c => fetch('/inspect/'+c).then(r => r.ok ? r.json() : null).catch(() => null))
+    );
+    classes.forEach((cls, i) => {
+      const meta = metas[i].value;
+      const btn = document.createElement('button');
+      btn.className = 'class-btn';
+      btn.onclick = () => loadClass(cls, btn, meta);
+      const nStu = meta ? (meta.students?.length ?? '?') : '?';
+      const nVec = meta ? (meta.n_vectors ?? '?') : '?';
+      const sz   = meta ? (meta.file_size_kb + ' KB') : '';
+      btn.innerHTML = `<div><div class="cls-name">${cls.replace(/_/g,' ')}</div>
+        <div class="cls-meta">${nStu} students · ${nVec} vec</div></div>
+        <span class="cls-badge">${sz}</span>`;
+      el.appendChild(btn);
+    });
+  } catch(e) {
+    el.innerHTML = `<div style="padding:14px;color:#f87171;font-size:.78rem">${e.message}</div>`;
+  }
+}
+async function loadClass(cls, btn, meta) {
+  document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('scroll-area').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('stats-bar').classList.remove('visible');
+  document.getElementById('filter-bar').classList.remove('visible');
+  try {
+    const data = meta || await fetch('/inspect/'+cls).then(r => r.json());
+    allStudents = data.students || [];
+    simMatrix   = data.sim_matrix || [];
+    showHeatmap = false;
+    document.getElementById('hmap-btn').classList.remove('on');
+    renderStats(data);
+    document.getElementById('filter-bar').classList.add('visible');
+    document.getElementById('f-search').value = '';
+    document.getElementById('f-quality').value = 'all';
+    document.getElementById('f-sort').value = 'name';
+    applyFilters();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('scroll-area').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'flex';
+    document.getElementById('placeholder').querySelector('p').textContent = 'Error: ' + e.message;
+  }
+}
+function renderStats(data) {
+  const bar = document.getElementById('stats-bar');
+  const nComplete = (data.students||[]).filter(s => s.n_embeddings >= 3).length;
+  const avgQ = (data.students||[]).reduce((a,s) => a + (s.avg_norm||0), 0) / Math.max(data.students?.length||1, 1);
+  bar.innerHTML = `
+    <div class="stat-chip"><span class="stat-num">${data.students?.length||0}</span><span class="stat-lbl">Students</span></div>
+    <div class="stats-sep"></div>
+    <div class="stat-chip"><span class="stat-num">${data.n_vectors||0}</span><span class="stat-lbl">Vectors</span></div>
+    <div class="stats-sep"></div>
+    <div class="stat-chip"><span class="stat-num">${nComplete}</span><span class="stat-lbl">Complete (3 emb)</span></div>
+    <div class="stats-sep"></div>
+    <div class="stat-chip"><span class="stat-num">${avgQ.toFixed(2)}</span><span class="stat-lbl">Avg Norm</span></div>
+    <div class="stats-sep"></div>
+    <div class="stat-chip"><span class="stat-num">${data.file_size_kb||0} KB</span><span class="stat-lbl">Index Size</span></div>
+  `;
+  bar.classList.add('visible');
+}
+function applyFilters() {
+  const q    = document.getElementById('f-search').value.toLowerCase();
+  const qual = document.getElementById('f-quality').value;
+  const sort = document.getElementById('f-sort').value;
+  let filtered = allStudents.filter(s => {
+    const matchQ = !q || s.name.toLowerCase().includes(q) || s.roll_no.toLowerCase().includes(q);
+    const n = s.n_embeddings;
+    const matchF = qual==='all'
+      || (qual==='complete' && n>=3)
+      || (qual==='partial'  && n>=1 && n<3)
+      || (qual==='missing'  && n===0);
+    return matchQ && matchF;
+  });
+  filtered.sort((a,b) => {
+    if(sort==='name')         return a.name.localeCompare(b.name);
+    if(sort==='roll')         return a.roll_no.localeCompare(b.roll_no);
+    if(sort==='quality_desc') return (b.avg_norm||0) - (a.avg_norm||0);
+    if(sort==='quality_asc')  return (a.avg_norm||0) - (b.avg_norm||0);
+    if(sort==='emb_desc')     return b.n_embeddings - a.n_embeddings;
+    return 0;
+  });
+  document.getElementById('filter-count').textContent =
+    `${filtered.length} / ${allStudents.length} students`;
+  renderCards(filtered);
+  if(showHeatmap) renderHeatmap();
+}
+function normColor(n){return n>=20?'#4ade80':n>=14?'#fbbf24':'#f87171';}
+function qualityClass(n){return n>=20?'qb-high':n>=14?'qb-mid':'qb-low';}
+function qualityLabel(n){return n>=20?'High':n>=14?'Mid':'Low';}
+const normMax=30;
+function renderCards(students) {
+  const grid = document.getElementById('card-grid');
+  if(!students.length){grid.innerHTML='<div class="no-data">No students match the current filters.</div>';return;}
+  grid.innerHTML = '';
+  students.forEach(s => {
+    const pct   = Math.min((s.avg_norm||0)/normMax*100,100);
+    const color = normColor(s.avg_norm||0);
+    const qcls  = qualityClass(s.avg_norm||0);
+    const qlbl  = qualityLabel(s.avg_norm||0);
+    const dateStr = s.enrolled_at ? s.enrolled_at.substring(0,10) : '—';
+    const photoHtml = (s.photo_path && s.photo_path !== '—')
+      ? `<img src="/student/photo/${s.id}" alt="${s.name}"
+              onerror="this.parentNode.innerHTML='<div class=\\'s-avatar\\' style=\\'background:${s.color}\\'>${s.initials}</div>'"
+              loading="lazy"/>`
+      : `<div class="s-avatar" style="background:${s.color}">${s.initials}</div>`;
+    const dots = [1,2,3].map(i =>
+      `<div class="emb-dot ${i<=s.n_embeddings?'emb-filled':'emb-empty'}"></div>`
+    ).join('');
+    const normChips = (s.norms||[]).map(n =>
+      `<span style="font-size:.62rem;color:#64748b;margin-right:4px">⬡${n.toFixed(1)}</span>`
+    ).join('');
+    const card = document.createElement('div');
+    card.className = 's-card';
+    card.innerHTML = `
+      <div class="s-photo">${photoHtml}</div>
+      <div class="s-body">
+        <div class="s-name" title="${s.name}">${s.name}</div>
+        <div class="s-roll">${s.roll_no} &bull; #${s.id}</div>
+        <div class="s-quality">
+          <div class="q-label">${s.n_embeddings}/3 embeddings &bull; ${normChips}</div>
+          <div class="q-bar-wrap"><div class="q-bar" style="width:${pct}%;background:${color}"></div></div>
+        </div>
+        <div class="emb-dots">${dots}</div>
+      </div>
+      <div class="s-footer">
+        <span class="enrolled-date">${dateStr}</span>
+        <span class="quality-badge ${qcls}">${qlbl} ${(s.avg_norm||0).toFixed(1)}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+function toggleHeatmap(){
+  showHeatmap=!showHeatmap;
+  document.getElementById('hmap-btn').classList.toggle('on',showHeatmap);
+  const wrap=document.getElementById('heatmap-wrap');
+  if(showHeatmap){wrap.style.display='block';renderHeatmap();}
+  else{wrap.style.display='none';}
+}
+function simColor(v){
+  if(v>=0.9)return{bg:'#0f3460',txt:'#67e8f9'};
+  if(v>=0.7)return{bg:'#1e3a5f',txt:'#38bdf8'};
+  if(v>=0.5)return{bg:'#1a2535',txt:'#94a3b8'};
+  return{bg:'#111827',txt:'#475569'};
+}
+function renderHeatmap(){
+  if(!simMatrix.length)return;
+  const inner=document.getElementById('heatmap-inner');
+  const names=allStudents.map(s=>s.name.split(' ')[0]);
+  let html='<table class="heatmap-table"><thead><tr><th></th>';
+  names.forEach(n=>{html+=`<th title="${n}">${n.substring(0,7)}</th>`;});
+  html+='</tr></thead><tbody>';
+  simMatrix.forEach((row,i)=>{
+    html+=`<tr><th style="text-align:right;color:var(--muted)">${names[i]?.substring(0,7)||i}</th>`;
+    row.forEach(v=>{const c=simColor(v);html+=`<td style="background:${c.bg};color:${c.txt}" title="${v.toFixed(3)}">${v.toFixed(2)}</td>`;});
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  inner.innerHTML=html;
+}
+loadClasses();
+</script>
+</body>
+</html>

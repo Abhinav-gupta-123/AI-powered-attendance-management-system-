@@ -239,8 +239,10 @@ def db_load_all_students(conn: MySQLConnection) -> List[Dict]:
 #  FAISS LAYER
 # ─────────────────────────────────────────────────────────────────────────────
 
-def faiss_index_path(class_name: str) -> str:
-    return os.path.join(FAISS_DIR, f"{class_name}.index")
+def faiss_index_path(class_name: str, school_name: str = "Default School") -> str:
+    school_dir = os.path.join(FAISS_DIR, school_name)
+    os.makedirs(school_dir, exist_ok=True)
+    return os.path.join(school_dir, f"{class_name}.index")
 
 
 def faiss_new_index() -> faiss.IndexIDMap:

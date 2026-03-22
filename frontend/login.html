@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Login — AI Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#6366f1;--accent2:#8b5cf6;--green:#10b981;--red:#e11d48;--text:#f1f5f9;--muted:#94a3b8;--border:rgba(255,255,255,0.08);--card:rgba(15,23,42,0.7)}
+body{font-family:'Inter',sans-serif;background:radial-gradient(ellipse at 60% 20%,#1e1b4b 0%,#0f0c29 40%,#020617 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--text);overflow:hidden}
+.bg-glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(circle,rgba(99,102,241,0.15) 0%,transparent 70%);pointer-events:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px 44px;width:100%;max-width:420px;backdrop-filter:blur(20px);box-shadow:0 32px 64px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.04) inset;animation:slide-up .5s ease}
+@keyframes slide-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 24px rgba(99,102,241,0.4)}
+.logo h1{font-size:1.25rem;font-weight:700;letter-spacing:-0.3px}
+.logo p{font-size:.78rem;color:var(--muted);font-weight:400}
+h2{font-size:1.5rem;font-weight:700;letter-spacing:-0.4px;margin-bottom:6px}
+.sub{font-size:.85rem;color:var(--muted);margin-bottom:32px}
+label{display:block;font-size:.8rem;font-weight:500;color:var(--muted);margin-bottom:6px;margin-top:18px}
+label:first-of-type{margin-top:0}
+input,select{width:100%;background:rgba(2,6,23,0.6);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+input::placeholder{color:var(--muted)}
+select option{background:#0f172a}
+.btn{width:100%;margin-top:28px;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s,box-shadow .2s;box-shadow:0 8px 24px rgba(99,102,241,0.35)}
+.btn:hover{opacity:.9;box-shadow:0 12px 32px rgba(99,102,241,0.5)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.alert{border-radius:10px;padding:11px 14px;font-size:.82rem;font-weight:500;display:none;margin-top:20px}
+.a-err{background:rgba(225,29,72,0.1);border:1px solid rgba(225,29,72,0.3);color:var(--red);display:block}
+.a-ok{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);display:block}
+.links{text-align:center;margin-top:24px;font-size:.82rem;color:var(--muted)}
+.links a{color:var(--accent);text-decoration:none;font-weight:500}
+.links a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🎓</div>
+    <div>
+      <h1>AttendAI</h1>
+      <p>AI-Powered Attendance System</p>
+    </div>
+  </div>
+  <h2>Welcome back</h2>
+  <p class="sub">Sign in to your account to continue</p>
+
+  <label>School ID</label>
+  <input id="school_id" type="number" value="1" min="1" placeholder="1"/>
+
+  <label>Username</label>
+  <input id="username" type="text" placeholder="Enter username" autocomplete="username"/>
+
+  <label>Password</label>
+  <input id="password" type="password" placeholder="Enter password" autocomplete="current-password"/>
+
+  <button class="btn" id="btn-login" onclick="doLogin()">Sign In</button>
+  <div id="alert" class="alert"></div>
+
+  <div class="links">
+    <a href="/">← Back to Dashboard</a>
+  </div>
+</div>
+<script>
+const API = '';
+function showAlert(msg, ok=false){
+  const el=document.getElementById('alert');
+  el.textContent=msg;
+  el.className='alert '+(ok?'a-ok':'a-err');
+}
+
+async function doLogin(){
+  const school_id = parseInt(document.getElementById('school_id').value)||1;
+  const username  = document.getElementById('username').value.trim();
+  const password  = document.getElementById('password').value;
+  if(!username||!password){ showAlert('Please fill in username and password.'); return; }
+  
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  
+  try{
+    const r = await fetch(API+'/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({school_id, username, password})
+    });
+    const d = await r.json();
+    if(!r.ok){ showAlert(d.detail||'Invalid credentials'); return; }
+    
+    // Store token and user info
+    localStorage.setItem('att_token', d.access_token);
+    localStorage.setItem('att_user', JSON.stringify(d.user));
+    showAlert('Login successful! Redirecting…', true);
+    setTimeout(()=>{ window.location.href='/'; }, 800);
+  }catch(e){
+    showAlert('Network error: '+e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='Sign In';
+  }
+}
+
+// Allow Enter key
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter') doLogin();
+});
+
+// Auto-redirect if already logged in
+const tok = localStorage.getItem('att_token');
+if(tok){ window.location.href='/'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Live Attendance — AI System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020617;--surface:rgba(15,23,42,0.6);--border:rgba(51,65,85,0.4);
+  --text:#f8fafc;--muted:#94a3b8;--accent:#38bdf8;--accent-glow:rgba(56,189,248,0.25);
+  --green:#34d399;--red:#fb7185;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden;
+     background-image:radial-gradient(circle at top right, rgba(30,58,138,0.15) 0%, transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(14,165,233,0.1) 0%, transparent 40%)}
+header{background:rgba(2,6,23,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+       border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:16px;flex-shrink:0;z-index:10}
+header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(to right,#38bdf8,#818cf8);-webkit-background-clip:text;color:transparent;letter-spacing:-0.02em}
+.nav-links{margin-left:auto;display:flex;gap:24px;font-size:.88rem;font-weight:500}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s;position:relative}
+.nav-links a:hover{color:var(--text)}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width .2s}
+.nav-links a:hover::after{width:100%}
+.main{display:flex;flex:1;overflow:hidden;position:relative}
+.sidebar{width:340px;background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+         border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:24px;z-index:5}
+.content{flex:1;display:flex;flex-direction:column;position:relative;background:transparent}
+h2{font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:20px;letter-spacing:-0.01em}
+label{font-size:.8rem;font-weight:500;color:var(--muted);display:block;margin-bottom:8px;margin-top:16px}
+input[type="text"]{width:100%;background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:10px;
+                   color:var(--text);padding:12px 14px;font-size:.9rem;outline:none;transition:all .2s;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2)}
+input[type="text"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow), inset 0 2px 4px rgba(0,0,0,0.2)}
+input[type="text"]::placeholder{color:#475569}
+.checkbox-lbl{display:flex;align-items:center;gap:10px;margin-top:18px;font-size:.85rem;cursor:pointer;color:var(--muted);transition:color .2s}
+.checkbox-lbl:hover{color:var(--text)}
+.btn{border:none;border-radius:10px;padding:12px;font-size:.95rem;font-weight:600;cursor:pointer;width:100%;margin-top:24px;
+     color:#fff;transition:all .2s;position:relative;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.btn:active{transform:scale(0.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important;box-shadow:none}
+.btn-start{background:linear-gradient(135deg,#0284c7,#2563eb);border:1px solid rgba(255,255,255,0.1)}
+.btn-start:hover:not(:disabled){background:linear-gradient(135deg,#0369a1,#1d4ed8);box-shadow:0 0 16px rgba(37,99,235,0.4)}
+.btn-stop{background:linear-gradient(135deg,#059669,#047857);border:1px solid rgba(255,255,255,0.1)}
+.btn-stop:hover{box-shadow:0 0 16px rgba(5,150,105,0.4)}
+.btn-quit{background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:12px;box-shadow:none}
+.btn-quit:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.video-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:24px}
+.video-wrap img{width:100%;height:100%;object-fit:contain;border-radius:16px;
+                box-shadow:0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px var(--border);background:#020617;animation:fade-in .5s ease-out}
+@keyframes fade-in{from{opacity:0;transform:scale(0.98)}to{opacity:1;transform:scale(1)}}
+.placeholder{color:var(--muted);text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;
+             background:var(--surface);padding:48px;border-radius:24px;border:1px dashed var(--border)}
+.placeholder svg{width:48px;height:48px;opacity:.4;color:var(--accent)}
+.stats-panel{background:var(--surface);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+             border-top:1px solid var(--border);padding:20px 32px;display:flex;gap:40px;flex-shrink:0;z-index:10}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat-val{font-size:1.75rem;font-weight:700;color:var(--text);letter-spacing:-0.03em}
+.stat-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.log-panel{margin-top:32px;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.log-title{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+.log-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.log-item{display:flex;justify-content:space-between;align-items:center;background:rgba(15,23,42,0.8);
+          padding:12px 16px;border-radius:10px;border-left:3px solid var(--green);
+          box-shadow:0 2px 8px rgba(0,0,0,0.2);animation:slide-in .3s ease-out;border-top:1px solid rgba(255,255,255,0.03)}
+@keyframes slide-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.log-item.absent{border-left-color:var(--red)}
+.log-name{font-weight:600;color:var(--text);font-size:.9rem}
+.log-meta{color:var(--muted);font-size:.75rem;background:rgba(0,0,0,0.2);padding:4px 8px;border-radius:6px}
+#alert{border-radius:10px;padding:12px 16px;font-size:.85rem;font-weight:500;margin-top:20px;display:none;animation:slide-in .2s}
+.alert-err{background:rgba(225,29,72,0.1);border:1px solid rgba(225,29,72,0.3);color:var(--red)}
+.alert-ok{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green)}
+.hidden{display:none !important}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#128249; Live Attendance Dashboard</h1>
+  <div class="nav-links">
+    <a href="/ui/enroll">&#128100; Enroll Student</a>
+    <a href="/ui/inspect">&#128202; Inspect FAISS</a>
+  </div>
+</header>
+<div class="main">
+  <div class="sidebar">
+    <div id="setup-panel">
+      <h2>Start Session</h2>
+      <label>Class Name</label>
+      <input type="text" id="cls" placeholder="e.g. btech_cs_1"/>
+      <label>Teacher Name</label>
+      <input type="text" id="teacher" placeholder="e.g. Dr. Smith"/>
+      <label class="checkbox-lbl">
+        <input type="checkbox" id="resume"/> Resume today's existing session
+      </label>
+      <button class="btn btn-start" id="btn-start" onclick="startSession()">Start Camera</button>
+      <div id="alert" class="alert-err"></div>
+    </div>
+    
+    <div id="active-panel" class="hidden" style="flex:1;display:flex;flex-direction:column">
+      <h2>Active Session</h2>
+      <div style="font-size:.85rem;color:var(--text);margin-bottom:4px" id="info-cls">Class: ---</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:16px" id="info-teacher">Teacher: ---</div>
+      <button class="btn btn-stop" onclick="stopSession()">Save & Close Attendance</button>
+      <button class="btn btn-quit" onclick="quitSession()">Quit without Saving</button>
+      
+      <div class="log-panel">
+        <div class="log-title">Recent Recognitions</div>
+        <div class="log-list" id="log-list"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="content">
+    <div class="video-wrap" id="video-wrap">
+      <div class="placeholder" id="placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        <p>Camera is offline.<br/>Start a session to begin.</p>
+      </div>
+      <img id="video-feed" class="hidden" src=""/>
+    </div>
+    
+    <div class="stats-panel hidden" id="stats-panel">
+      <div class="stat"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Elapsed</span></div>
+      <div class="stat"><span class="stat-val" id="stat-present" style="color:var(--green)">0</span><span class="stat-lbl">Present</span></div>
+      <div class="stat"><span class="stat-val" id="stat-absent" style="color:var(--red)">0</span><span class="stat-lbl">Absent</span></div>
+      <div class="stat"><span class="stat-val" id="stat-total">0</span><span class="stat-lbl">Total Enrolled</span></div>
+      <div class="stat" style="margin-left:auto"><span class="stat-val" id="stat-fps" style="color:var(--muted)">0.0</span><span class="stat-lbl">FPS</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let sessionId = null;
+let statusInterval = null;
+
+function showAlert(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function startSession() {
+  const cls = document.getElementById('cls').value.trim();
+  const teacher = document.getElementById('teacher').value.trim();
+  const resume = document.getElementById('resume').checked;
+  if(!cls || !teacher) { showAlert('Fill all required fields'); return; }
+  
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('alert').style.display = 'none';
+  
+  try {
+    const r = await fetch('/attendance/session/start', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({class_name: cls, teacher_name: teacher, resume})
+    });
+    const d = await r.json();
+    if(!r.ok) { showAlert(d.detail || 'Error starting session'); document.getElementById('btn-start').disabled = false; return; }
+    
+    sessionId = d.session_id;
+    document.getElementById('setup-panel').classList.add('hidden');
+    document.getElementById('active-panel').classList.remove('hidden');
+    document.getElementById('placeholder').classList.add('hidden');
+    document.getElementById('video-feed').classList.remove('hidden');
+    document.getElementById('stats-panel').classList.remove('hidden');
+    
+    document.getElementById('info-cls').textContent = `Class: ${d.class_name}`;
+    document.getElementById('info-teacher').textContent = `Teacher: ${d.teacher_name}`;
+    document.getElementById('stat-total').textContent = d.students;
+    
+    document.getElementById('video-feed').src = d.stream_url;
+    
+    statusInterval = setInterval(updateStatus, 1000);
+  } catch(e) {
+    showAlert('Network error: ' + e.message);
+    document.getElementById('btn-start').disabled = false;
+  }
+}
+
+async function updateStatus() {
+  if(!sessionId) return;
+  try {
+    const r = await fetch('/attendance/session/' + sessionId + '/status');
+    if(!r.ok) return;
+    const d = await r.json();
+    document.getElementById('stat-time').textContent = d.elapsed;
+    document.getElementById('stat-present').textContent = d.present;
+    document.getElementById('stat-absent').textContent = d.absent;
+    document.getElementById('stat-fps').textContent = d.fps.toFixed(1);
+    
+    const logs = d.present_log || [];
+    const list = document.getElementById('log-list');
+    list.innerHTML = '';
+    [...logs].reverse().forEach(log => {
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <span class="log-name">${log.name}</span>
+        <span class="log-meta">${log.time} &bull; ${(log.sim*100).toFixed(0)}%</span>
+      `;
+      list.appendChild(item);
+    });
+  } catch(e) {}
+}
+
+async function stopSession() {
+  if(!sessionId) return;
+  if(!confirm("Are you sure you want to stop and save attendance?")) return;
+  clearInterval(statusInterval);
+  try {
+    const r = await fetch('/attendance/session/' + sessionId + '/stop', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({confirm: true})
+    });
+    const d = await r.json();
+    alert(`Attendance Saved! Present: ${d.present}, Absent: ${d.absent}`);
+    resetUI();
+  } catch(e) { alert("Error saving: " + e.message); }
+}
+
+async function quitSession() {
+  if(!sessionId) return;
+  if(!confirm("Are you sure you want to quit WITHOUT saving?")) return;
+  clearInterval(statusInterval);
+  try {
+    await fetch('/attendance/session/' + sessionId, {method: 'DELETE'});
+    resetUI();
+  } catch(e) { alert("Error quitting: " + e.message); }
+}
+
+function resetUI() {
+  sessionId = null;
+  document.getElementById('video-feed').src = "";
+  document.getElementById('setup-panel').classList.remove('hidden');
+  document.getElementById('active-panel').classList.add('hidden');
+  document.getElementById('placeholder').classList.remove('hidden');
+  document.getElementById('video-feed').classList.add('hidden');
+  document.getElementById('stats-panel').classList.add('hidden');
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('log-list').innerHTML = '';
+}
+</script>
+</body>
+</html>

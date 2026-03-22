@@ -335,9 +335,11 @@ class CameraThread(threading.Thread):
         self._open()
 
     def _open(self) -> None:
-        self.cap = cv2.VideoCapture(self.camera_index)
+        self.cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW) if sys.platform == "win32" else cv2.VideoCapture(self.camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  FRAME_WIDTH)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+        self.cap.set(cv2.CAP_PROP_FPS, 30)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)   # never hold stale frames in driver
 
     def run(self) -> None:
         fails = 0

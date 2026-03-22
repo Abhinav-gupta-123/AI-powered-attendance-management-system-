@@ -88,14 +88,14 @@ def avatar_color(student_id: int) -> str:
 #  DATA LOADING
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_class_data(class_name: str):
-    index_path = os.path.join(FAISS_DIR, f"{class_name}.index")
+def load_class_data(class_path: str):
+    # class_path might be "Default School/btech_cs_1"
+    parts = class_path.replace("\\", "/").split("/")
+    class_name = parts[-1] if len(parts) > 0 else class_path
+    
+    index_path = os.path.join(FAISS_DIR, f"{class_path}.index")
     if not os.path.exists(index_path):
         print(f"[ERROR] Index not found: {index_path}")
-        print(f"  Available indexes:")
-        for f in os.listdir(FAISS_DIR):
-            if f.endswith(".index"):
-                print(f"    {f.replace('.index', '')}")
         sys.exit(1)
 
     print(f"[FAISS] Loading {index_path} ...")
@@ -486,15 +486,25 @@ new Chart(document.getElementById('normChart'), {{
 #  MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 
-def list_available():
-    if not os.path.exists(FAISS_DIR):
-        print(f"[ERROR] faiss_indexes/ folder not found.")
-        sys.exit(1)
-    indexes = [f.replace(".index", "")
-               for f in os.listdir(FAISS_DIR)
-               if f.endswith(".index")]
+def list_available(school_name: str = None):
+    # Use the filter directory if provided, otherwise the base FAISS_DIR
+    search_root = os.path.join(FAISS_DIR, school_name) if school_name else FAISS_DIR
+    
+    if not os.path.exists(search_root):
+        # If the school folder doesn't exist yet, return empty but don't crash
+        return []
+    
+    indexes = []
+    for root, dirs, files in os.walk(search_root):
+        for f in files:
+            if f.endswith(".index"):
+                # Always store the path RELATIVE to FAISS_DIR so it works in the router
+                full_path = os.path.join(root, f)
+                rel_path = os.path.relpath(full_path, FAISS_DIR)
+                indexes.append(rel_path.replace("\\", "/").replace(".index", ""))
+                
     if not indexes:
-        print("[ERROR] No .index files found in faiss_indexes/")
+        print(f"[ERROR] No .index files found anywhere in {FAISS_DIR}/")
         sys.exit(1)
     return indexes
 
