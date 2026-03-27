@@ -39,24 +39,35 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 
 ---
 
+### 🖥️ Live Dashboard
+![Dashboard](docs/images/dashboard.png)
+*Real-time attendance tracking with live camera feed and session management.*
+
+### 🛡️ Real-time Recognition
+![Live Recognition](docs/images/live_recognition.png)
+*FaceAttend AI identifying Abhinav Gupta in real-time with confidence scores.*
+
+### 👤 Student Enrollment
+![Enrollment](docs/images/enroll.png)
+*High-precision enrollment system capturing 512-D face embeddings.*
+
+### 🔍 FAISS Index Inspector
+![Inspector](docs/images/inspect.png)
+*Advanced vector database management for lightning-fast search.*
+
+---
+
 ## 🧠 How It Works (Actual Pipeline)
 
-```
-📸 Camera Feed
-      ↓
-🎯 InsightFace Buffalo_SC  ──  Face Detection + Alignment (640×640)
-      ↓
-🧬 InsightFace Buffalo_sc   ──  512-D Face Embedding (ONNX / CPU)
-      ↓
-⚡ FAISS Index             ──  Per-school cosine similarity search
-      ↓
-🆔 Identity Matched        ──  Confidence score logged
-      ↓
-🗄️  MySQL (pooled)         ──  Attendance record written (1 per student/day)
-      ↓
-🌐 FastAPI + Uvicorn       ──  REST API + HTML Dashboard
-      ↓
-🔐 JWT Auth                ──  Admin / Teacher role-gated routes
+```mermaid
+graph TD
+    A[📸 Camera Feed] --> B[🎯 InsightFace Buffalo_SC]
+    B -->|Face Detection & Alignment| C[🧬 InsightFace Buffalo_L]
+    C -->|512-D Face Embedding| D[⚡ FAISS Index]
+    D -->|Cosine Similarity Search| E[🆔 Identity Matched]
+    E -->|Confidence Score| F[🗄️ MySQL Pooled]
+    F -->|Attendance Record| G[🌐 FastAPI Dashboard]
+    G -->|JWT Secured| H[🔐 Admin/Teacher View]
 ```
 
 ---
@@ -90,33 +101,22 @@ Just walk in front of the camera → recognized → ✅ **Done.**
 AI-powered-attendance-management-system/
 │
 ├── 📁 frontend/                  # HTML/CSS/JS Web Dashboard
-│
-├── 📁 models/                    # InsightFace model weights (Buffalo_SC / Buffalo_L)
+├── 📁 models/                    # InsightFace model weights
+├── 📁 docs/                      # Project documentation and assets
+│   └── 📁 images/                # Screenshots for README
 │
 ├── 📁 scripts/
-│   ├── api.py                    # FastAPI entry point — mounts all routers
-│   ├── auth_deps.py              # JWT auth dependencies (get_current_user, require_admin)
-│   ├── config.py                 # DB credentials
-│   ├── db.py                     # MySQL connection pool + query helpers
-│   ├── DB_setup.py               # One-time DB + table creation
-│   ├── live_attendance.py        # Core live attendance session logic
-│   ├── Enroll_student.py         # Student enrollment + embedding generation
-│   ├── inspect_index.py          # FAISS index inspection utilities
-│   ├── migrate_csv.py            # CSV → MySQL data migration
-│   ├── migrate_auth.py           # Phase 2: users + teacher_classes tables
-│   ├── migrate_faiss.py          # Move flat indexes → per-school subdirectories
-│   └── routers/
-│       ├── attendance.py         # Live session routes + dashboard UI
-│       ├── enroll.py             # Enrollment routes + UI
-│       ├── inspect.py            # FAISS inspector routes + UI
-│       └── auth.py               # Login / logout / token routes
+│   ├── api.py                    # FastAPI entry point
+│   ├── auth_deps.py              # JWT auth dependencies
+│   ├── db.py                     # MySQL connection pooling
+│   ├── live_attendance.py        # Core Recognition logic
+│   ├── Enroll_student.py         # Enrollment pipeline
+│   ├── inspect_index.py          # FAISS inspection
+│   └── routers/                  # API endpoints
 │
-├── 📁 faiss_indexes/
-│   └── Default School/           # Per-school FAISS index files (.index per class)
-│
-├── 📄 requirements.txt
-├── 📄 .gitignore
-└── 📄 README.md
+├── 📁 faiss_indexes/             # Isolated vector indexes
+├── 📄 requirements.txt           # Dependency manifest
+└── 📄 README.md                  # Project documentation
 ```
 
 ---
@@ -125,32 +125,13 @@ AI-powered-attendance-management-system/
 
 | Layer | Technology |
 |---|---|
-| **Face Detection + Alignment** | InsightFace Buffalo_SC (ONNX, CPUExecutionProvider) |
-| **Face Recognition / Embedding** | InsightFace Buffalo_L — 512-D float32 embeddings |
-| **Vector Search** | FAISS (per-school, per-class cosine similarity) |
-| **Backend Framework** | FastAPI + Uvicorn (async, ASGI) |
-| **Authentication** | JWT (python-jose) + bcrypt password hashing |
-| **Database** | MySQL via mysql-connector-python (connection pool, size=5) |
-| **CV Processing** | OpenCV, Pillow |
-| **ML Runtime** | ONNX Runtime (CPU), TensorFlow, PyTorch CPU |
-| **Frontend** | HTML5, CSS3, JavaScript |
-
----
-
-## 🗄️ Database Schema
-
-```
-schools
-  └── classes        (e.g. CS-A, MECH-B, per school)
-        └── students       (name, roll_no, 3× 512-D embedding BLOBs)
-        └── attendance     (one row per student per day + confidence_score)
-        └── sessions       (groups all marks from one live camera session)
-
-users                (admins + teachers, per school)
-teacher_classes      (maps teachers → their assigned classes)
-```
-
-> Embeddings are stored as `MEDIUMBLOB` (3 angles per student) in MySQL **and** live in FAISS — the index can be fully rebuilt from the DB at any time.
+| **Face Detection** | InsightFace Buffalo_SC (ONNX) |
+| **Face Recognition** | InsightFace Buffalo_L (512-D) |
+| **Vector Search** | FAISS (Cosine Similarity) |
+| **Backend** | FastAPI + Uvicorn (ASGI) |
+| **Auth** | JWT + bcrypt |
+| **Database** | MySQL (Connection Pooling) |
+| **Frontend** | Vanilla JS, CSS3, HTML5 |
 
 ---
 
@@ -159,8 +140,8 @@ teacher_classes      (maps teachers → their assigned classes)
 ### Prerequisites
 
 - Python 3.10+
-- MySQL running locally (port 3306)
-- Webcam or IP camera
+- MySQL Server (Port 3306)
+- Webcam / IP Camera
 
 ### Installation
 
@@ -169,30 +150,21 @@ teacher_classes      (maps teachers → their assigned classes)
 git clone https://github.com/Abhinav-gupta-123/AI-powered-attendance-management-system-.git
 cd AI-powered-attendance-management-system-
 
-# 2. Create and activate a virtual environment
+# 2. Setup Virtual Environment
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+# Windows: venv\Scripts\activate | Linux: source venv/bin/activate
+venv\Scripts\activate
 
-# 3. Install dependencies
+# 3. Install Dependencies
 pip install -r requirements.txt
 ```
 
-### First-Time Database Setup (run in order)
+### Database Initialization
 
 ```bash
-# Step 1 — Create all tables (schools, classes, students, attendance, sessions)
-python scripts/DB_setup.py
-
-# Step 2 — Migrate existing CSV data into MySQL (if you have prior data)
-python scripts/migrate_csv.py
-
-# Step 3 — Add users + teacher_classes tables and seed default admin account
-python scripts/migrate_auth.py
-# Default login → username: admin  |  password: admin123
-# ⚠️  Change this immediately in production!
-
-# Step 4 — Restructure FAISS indexes into per-school subdirectories
-python scripts/migrate_faiss.py
+python scripts/DB_setup.py      # Initialize Schema
+python scripts/migrate_auth.py  # Seed Admin Account
+# Default login: admin | admin123
 ```
 
 ### Run the Server
@@ -201,69 +173,17 @@ python scripts/migrate_faiss.py
 uvicorn scripts.api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Open **http://localhost:8000** in your browser.
-Interactive API docs at **http://localhost:8000/docs** (Swagger UI, auto-generated by FastAPI).
-
----
-
-## 🔐 Auth & Roles
-
-| Role | Access |
-|---|---|
-| **Admin** | Full access — all classes, all students, manage users |
-| **Teacher** | Only their assigned classes (enforced at route level) |
-
-JWT tokens expire after **12 hours**. Revoked on logout via in-memory blocklist.
-
----
-
-## 🗺️ Roadmap
-
-```
-[✅] InsightFace Buffalo_SC/L detection + embedding pipeline
-[✅] Per-school FAISS cosine similarity search
-[✅] FastAPI + Uvicorn async backend
-[✅] MySQL attendance logging with connection pooling
-[✅] JWT auth — admin + teacher roles with class-level guards
-[✅] Session-based attendance tracking with confidence scores
-[✅] Student enrollment (3-angle embeddings in DB + FAISS)
-[✅] Multi-school FAISS index structure
-[✅] FAISS index inspector
-[🔄] Anti-spoofing / liveness detection
-[🔄] Analytics dashboard with charts
-[🔄] Report export (CSV / PDF)
-[🧪] Docker containerization
-[🧪] Cloud deployment (AWS / GCP / Render)
-[🧪] Email/SMS alerts for absent students
-```
-
----
-
-## 🤝 Contributing
-
-This project is **actively under development** — new features and improvements ship regularly.
-
-```bash
-git checkout -b feature/your-feature-name
-git commit -m "✨ Add: description"
-git push origin feature/your-feature-name
-# Open a Pull Request 🚀
-```
-
 ---
 
 ## ⚠️ Work In Progress
 
 - Anti-spoofing is actively being developed
-- Currently CPU-only (GPU support is architecturally ready via ONNX providers)
+- GPU support is architecturally ready
 - UI redesign is planned
-- Cloud deployment coming soon
 
 > This is a **living system** — it gets better every week. 🔥
 
 ---
-
-## 📬 Contact
 
 <div align="center">
 
@@ -271,17 +191,9 @@ git push origin feature/your-feature-name
 
 [![GitHub](https://img.shields.io/badge/GitHub-Abhinav--gupta--123-181717?style=for-the-badge&logo=github)](https://github.com/Abhinav-gupta-123)
 
-*Open to collaborations, feedback, and feature suggestions!*
-
-</div>
-
----
-
-<div align="center">
-
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:24243e,50:302b63,100:0f0c29&height=120&section=footer&animation=fadeIn" width="100%"/>
 
-### ⭐ If this project impressed you, drop a star — it means the world!
+### ⭐ If this project impressed you, drop a star!
 
 *Built with 💜 by Abhinav Gupta | Always improving, never stopping.*
 
