@@ -175,12 +175,16 @@ uvicorn scripts.api:app --host 0.0.0.0 --port 8000 --reload
 
 ---
 
-## ⚠️ Work In Progress
+## 🛠️ Current Focus & Roadmap
 
-- Anti-spoofing is actively being developed
-- GPU support is architecturally ready
-- UI redesign is planned
+FaceAttend AI is under active development. My current engineering focus is on:
 
+- **🛡️ Advanced Anti-Spoofing**: Implementing **Liveness Detection** to prevent "spoofing" (e.g., using a photo or video of a person to mark attendance).
+- **⚡ Performance Scaling**: Optimizing the inference pipeline to **increase FPS** and reduce latency during high-traffic attendance sessions.
+- **🏗️ Code Architecture**: Continuous **refactoring and optimization** to minimize memory footprint and ensure military-grade reliability.
+- **🚀 Cloud Integration**: Seamless syncing with AWS/GCP for distributed school systems.
+
+> [!NOTE]
 > This is a **living system** — it gets better every week. 🔥
 
 ---
